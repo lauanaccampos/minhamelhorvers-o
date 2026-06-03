@@ -1,0 +1,351 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .db-root { padding: 1rem 0; }
+  .db-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px; }
+  .db-title { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .db-date { font-size: 13px; color: var(--color-text-secondary); }
+  .score-ring { display: flex; align-items: center; gap: 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 12px 16px; border: 0.5px solid var(--color-border-tertiary); }
+  .ring-label { font-size: 12px; color: var(--color-text-secondary); }
+  .ring-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+
+  .nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .nav-btn { font-size: 13px; padding: 6px 14px; border-radius: 999px; border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; font-family: var(--font-sans); }
+  .nav-btn.active { color: var(--color-text-primary); background: var(--color-background-secondary); border-color: var(--color-border-primary); font-weight: 500; }
+  .nav-btn:hover:not(.active) { background: var(--color-background-secondary); }
+
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .mcard { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-tertiary); }
+  .mcard-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .mcard-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+  .mcard-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .mcard-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+  .section-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .section-card h3 { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+
+  .habit-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .habit-name { font-size: 13px; color: var(--color-text-secondary); flex: 1; min-width: 0; }
+  .habit-dots { display: flex; gap: 4px; }
+  .hdot { width: 18px; height: 18px; border-radius: 4px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); cursor: pointer; transition: background 0.1s; }
+  .hdot.done { background: #1D9E75; border-color: #1D9E75; }
+  .hdot.done-2 { background: #378ADD; border-color: #378ADD; }
+  .hdot.done-3 { background: #D85A30; border-color: #D85A30; }
+  .hdot.done-4 { background: #D4537E; border-color: #D4537E; }
+  .habit-pct { font-size: 12px; color: var(--color-text-tertiary); min-width: 32px; text-align: right; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bar-label { font-size: 13px; color: var(--color-text-secondary); width: 80px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.5s; }
+  .bar-val { font-size: 12px; color: var(--color-text-tertiary); min-width: 40px; text-align: right; }
+
+  .goal-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .goal-icon { width: 32px; height: 32px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+  .goal-text { flex: 1; min-width: 0; }
+  .goal-name { font-size: 13px; color: var(--color-text-primary); font-weight: 500; }
+  .goal-desc { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .goal-prog { display: flex; flex-direction: column; gap: 4px; width: 80px; flex-shrink: 0; }
+  .goal-pct { font-size: 13px; font-weight: 500; color: var(--color-text-primary); text-align: right; }
+  .goal-track { height: 4px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+  .goal-fill { height: 100%; border-radius: 99px; }
+
+  .task-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .task-item:last-child { border-bottom: none; }
+  .task-check { width: 18px; height: 18px; border-radius: 4px; border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+  .task-check.checked { background: #1D9E75; border-color: #1D9E75; color: white; }
+  .task-label { font-size: 13px; color: var(--color-text-primary); flex: 1; }
+  .task-label.done { text-decoration: line-through; color: var(--color-text-tertiary); }
+  .task-tag { font-size: 11px; padding: 2px 8px; border-radius: 99px; }
+
+  .mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: transparent; cursor: pointer; font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-sans); transition: all 0.15s; }
+  .mood-btn.selected { background: var(--color-background-secondary); border-color: var(--color-border-primary); color: var(--color-text-primary); font-weight: 500; }
+  .mood-emoji { font-size: 22px; }
+
+  .fin-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13px; }
+  .fin-row:last-child { border-bottom: none; }
+  .fin-cat { color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+  .fin-amt { font-weight: 500; color: var(--color-text-primary); }
+  .fin-bar { width: 60px; height: 4px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; margin-left: 10px; }
+  .fin-bfill { height: 100%; border-radius: 99px; }
+
+  .input-row { display: flex; gap: 8px; margin-top: 12px; }
+  .input-row input { flex: 1; font-size: 13px; padding: 6px 10px; }
+  .add-btn { font-size: 13px; padding: 6px 14px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-primary); font-family: var(--font-sans); }
+  .add-btn:hover { background: var(--color-background-secondary); }
+
+  .tag-saude { background: #E1F5EE; color: #0F6E56; }
+  .tag-fin { background: #E6F1FB; color: #185FA5; }
+  .tag-prod { background: #FAEEDA; color: #854F0B; }
+  .tag-mente { background: #FBEAF0; color: #993556; }
+</style>
+
+<div class="db-root">
+  <h2 class="sr-only">Dashboard pessoal com módulos de saúde, finanças, produtividade e bem-estar</h2>
+
+  <div class="db-header">
+    <div>
+      <div class="db-title">Meu Painel de Vida</div>
+      <div class="db-date" id="today-date"></div>
+    </div>
+    <div class="score-ring">
+      <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+        <circle cx="22" cy="22" r="18" fill="none" stroke="var(--color-border-tertiary)" stroke-width="4"/>
+        <circle cx="22" cy="22" r="18" fill="none" stroke="#1D9E75" stroke-width="4"
+          stroke-dasharray="113" stroke-dashoffset="28" stroke-linecap="round" transform="rotate(-90 22 22)"/>
+        <text x="22" y="26" text-anchor="middle" font-size="12" font-weight="500" fill="var(--color-text-primary)" font-family="var(--font-sans)">75</text>
+      </svg>
+      <div>
+        <div class="ring-label">Score geral</div>
+        <div class="ring-val">Ótimo dia!</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav" role="tablist">
+    <button class="nav-btn active" onclick="showTab('visao')" role="tab"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Visão geral</button>
+    <button class="nav-btn" onclick="showTab('saude')" role="tab"><i class="ti ti-heartbeat" aria-hidden="true"></i> Saúde & Corpo</button>
+    <button class="nav-btn" onclick="showTab('financas')" role="tab"><i class="ti ti-wallet" aria-hidden="true"></i> Finanças</button>
+    <button class="nav-btn" onclick="showTab('prod')" role="tab"><i class="ti ti-checklist" aria-hidden="true"></i> Produtividade</button>
+    <button class="nav-btn" onclick="showTab('mente')" role="tab"><i class="ti ti-mood-smile" aria-hidden="true"></i> Bem-estar</button>
+  </nav>
+
+  <!-- VISÃO GERAL -->
+  <div class="section visible" id="tab-visao">
+    <div class="cards-grid">
+      <div class="mcard">
+        <div class="mcard-label"><span class="mcard-dot" style="background:#1D9E75"></span>Treinos essa semana</div>
+        <div class="mcard-val">3<span style="font-size:14px;color:var(--color-text-tertiary)">/5</span></div>
+        <div class="mcard-sub">2 restantes</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label"><span class="mcard-dot" style="background:#378ADD"></span>Saldo do mês</div>
+        <div class="mcard-val" style="font-size:18px;">R$1.240</div>
+        <div class="mcard-sub">Meta: R$1.500</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label"><span class="mcard-dot" style="background:#EF9F27"></span>Tarefas hoje</div>
+        <div class="mcard-val">2<span style="font-size:14px;color:var(--color-text-tertiary)">/6</span></div>
+        <div class="mcard-sub">Concluídas</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label"><span class="mcard-dot" style="background:#D4537E"></span>Humor hoje</div>
+        <div class="mcard-val" style="font-size:26px;">😊</div>
+        <div class="mcard-sub">Animado</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-trophy" aria-hidden="true" style="margin-right:6px;color:#EF9F27"></i>Metas em andamento</h3>
+      <div class="goal-item">
+        <div class="goal-icon" style="background:#E1F5EE;"><i class="ti ti-run" style="color:#1D9E75;font-size:16px;" aria-hidden="true"></i></div>
+        <div class="goal-text"><div class="goal-name">Correr 5km sem parar</div><div class="goal-desc">Saúde · prazo: 30 jul</div></div>
+        <div class="goal-prog"><div class="goal-pct">68%</div><div class="goal-track"><div class="goal-fill" style="width:68%;background:#1D9E75;"></div></div></div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-icon" style="background:#E6F1FB;"><i class="ti ti-pig-money" style="color:#378ADD;font-size:16px;" aria-hidden="true"></i></div>
+        <div class="goal-text"><div class="goal-name">Reserva de emergência</div><div class="goal-desc">Finanças · R$10.000</div></div>
+        <div class="goal-prog"><div class="goal-pct">43%</div><div class="goal-track"><div class="goal-fill" style="width:43%;background:#378ADD;"></div></div></div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-icon" style="background:#FAEEDA;"><i class="ti ti-book" style="color:#EF9F27;font-size:16px;" aria-hidden="true"></i></div>
+        <div class="goal-text"><div class="goal-name">Ler 12 livros em 2025</div><div class="goal-desc">Produtividade · 5/12 lidos</div></div>
+        <div class="goal-prog"><div class="goal-pct">42%</div><div class="goal-track"><div class="goal-fill" style="width:42%;background:#EF9F27;"></div></div></div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-icon" style="background:#FBEAF0;"><i class="ti ti-moon" style="color:#D4537E;font-size:16px;" aria-hidden="true"></i></div>
+        <div class="goal-text"><div class="goal-name">Meditar todo dia</div><div class="goal-desc">Bem-estar · 18 dias seguidos</div></div>
+        <div class="goal-prog"><div class="goal-pct">86%</div><div class="goal-track"><div class="goal-fill" style="width:86%;background:#D4537E;"></div></div></div>
+      </div>
+      <button class="add-btn" style="margin-top:8px;width:100%;font-size:13px;" onclick="sendPrompt('Quero adicionar uma nova meta ao meu dashboard. Me ajude a definir prazo e como acompanhar!')">+ Adicionar meta ↗</button>
+    </div>
+  </div>
+
+  <!-- SAÚDE & CORPO -->
+  <div class="section" id="tab-saude">
+    <div class="cards-grid">
+      <div class="mcard"><div class="mcard-label">Peso atual</div><div class="mcard-val">78<span style="font-size:14px;color:var(--color-text-tertiary)">kg</span></div><div class="mcard-sub">Meta: 74kg</div></div>
+      <div class="mcard"><div class="mcard-label">Sono ontem</div><div class="mcard-val">7,5<span style="font-size:14px;color:var(--color-text-tertiary)">h</span></div><div class="mcard-sub">Ótimo!</div></div>
+      <div class="mcard"><div class="mcard-label">Água hoje</div><div class="mcard-val">1,8<span style="font-size:14px;color:var(--color-text-tertiary)">L</span></div><div class="mcard-sub">Meta: 2,5L</div></div>
+      <div class="mcard"><div class="mcard-label">Calorias</div><div class="mcard-val">1.820<span style="font-size:11px;color:var(--color-text-tertiary)"> kcal</span></div><div class="mcard-sub">Meta: 2.000</div></div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-calendar-week" aria-hidden="true" style="margin-right:6px;color:#1D9E75"></i>Hábitos da semana</h3>
+      <div id="habits-saude"></div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-salad" aria-hidden="true" style="margin-right:6px;color:#1D9E75"></i>Macronutrientes hoje</h3>
+      <div class="bar-row"><div class="bar-label">Proteína</div><div class="bar-track"><div class="bar-fill" style="width:72%;background:#1D9E75;"></div></div><div class="bar-val">108g / 150g</div></div>
+      <div class="bar-row"><div class="bar-label">Carboidrato</div><div class="bar-track"><div class="bar-fill" style="width:58%;background:#378ADD;"></div></div><div class="bar-val">145g / 250g</div></div>
+      <div class="bar-row"><div class="bar-label">Gordura</div><div class="bar-track"><div class="bar-fill" style="width:81%;background:#EF9F27;"></div></div><div class="bar-val">57g / 70g</div></div>
+      <button class="add-btn" style="margin-top:12px;" onclick="sendPrompt('Me ajude a montar um plano alimentar semanal para atingir minha meta de peso.')">Criar plano alimentar ↗</button>
+    </div>
+  </div>
+
+  <!-- FINANÇAS -->
+  <div class="section" id="tab-financas">
+    <div class="cards-grid">
+      <div class="mcard"><div class="mcard-label">Receita mensal</div><div class="mcard-val" style="font-size:18px;">R$5.400</div><div class="mcard-sub">Jun 2025</div></div>
+      <div class="mcard"><div class="mcard-label">Gastos até agora</div><div class="mcard-val" style="font-size:18px;">R$3.210</div><div class="mcard-sub">de R$4.000 orçado</div></div>
+      <div class="mcard"><div class="mcard-label">Investido</div><div class="mcard-val" style="font-size:18px;">R$650</div><div class="mcard-sub">Meta: R$800/mês</div></div>
+      <div class="mcard"><div class="mcard-label">Saldo disponível</div><div class="mcard-val" style="font-size:18px;color:#1D9E75;">R$1.540</div><div class="mcard-sub">após gastos</div></div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-chart-pie" aria-hidden="true" style="margin-right:6px;color:#378ADD"></i>Gastos por categoria</h3>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#E24B4A;display:inline-block;"></span>Moradia</div><div style="display:flex;align-items:center"><div class="fin-amt">R$1.200</div><div class="fin-bar"><div class="fin-bfill" style="width:100%;background:#E24B4A;"></div></div></div></div>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD;display:inline-block;"></span>Alimentação</div><div style="display:flex;align-items:center"><div class="fin-amt">R$680</div><div class="fin-bar"><div class="fin-bfill" style="width:57%;background:#378ADD;"></div></div></div></div>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#EF9F27;display:inline-block;"></span>Transporte</div><div style="display:flex;align-items:center"><div class="fin-amt">R$310</div><div class="fin-bar"><div class="fin-bfill" style="width:26%;background:#EF9F27;"></div></div></div></div>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Lazer</div><div style="display:flex;align-items:center"><div class="fin-amt">R$420</div><div class="fin-bar"><div class="fin-bfill" style="width:35%;background:#1D9E75;"></div></div></div></div>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#7F77DD;display:inline-block;"></span>Saúde</div><div style="display:flex;align-items:center"><div class="fin-amt">R$200</div><div class="fin-bar"><div class="fin-bfill" style="width:17%;background:#7F77DD;"></div></div></div></div>
+      <div class="fin-row"><div class="fin-cat"><span style="width:10px;height:10px;border-radius:2px;background:#888780;display:inline-block;"></span>Outros</div><div style="display:flex;align-items:center"><div class="fin-amt">R$400</div><div class="fin-bar"><div class="fin-bfill" style="width:33%;background:#888780;"></div></div></div></div>
+      <button class="add-btn" style="margin-top:12px;" onclick="sendPrompt('Me ajude a criar um plano para economizar mais e atingir minha reserva de emergência de R$10.000.')">Planejar reserva ↗</button>
+    </div>
+  </div>
+
+  <!-- PRODUTIVIDADE -->
+  <div class="section" id="tab-prod">
+    <div class="cards-grid">
+      <div class="mcard"><div class="mcard-label">Tarefas hoje</div><div class="mcard-val">2<span style="font-size:14px;color:var(--color-text-tertiary)">/6</span></div></div>
+      <div class="mcard"><div class="mcard-label">Foco (pomodoros)</div><div class="mcard-val">4<span style="font-size:14px;color:var(--color-text-tertiary)"> sessões</span></div></div>
+      <div class="mcard"><div class="mcard-label">Streak hábitos</div><div class="mcard-val">18<span style="font-size:14px;color:var(--color-text-tertiary)"> dias</span></div></div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-checks" aria-hidden="true" style="margin-right:6px;color:#EF9F27"></i>Tarefas de hoje</h3>
+      <div id="task-list"></div>
+      <div class="input-row">
+        <input type="text" id="new-task" placeholder="Nova tarefa...">
+        <button class="add-btn" onclick="addTask()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-repeat" aria-hidden="true" style="margin-right:6px;color:#EF9F27"></i>Hábitos de produtividade</h3>
+      <div id="habits-prod"></div>
+    </div>
+  </div>
+
+  <!-- BEM-ESTAR -->
+  <div class="section" id="tab-mente">
+    <div class="cards-grid">
+      <div class="mcard"><div class="mcard-label">Meditação</div><div class="mcard-val">18<span style="font-size:14px;color:var(--color-text-tertiary)"> dias</span></div><div class="mcard-sub">Sequência atual</div></div>
+      <div class="mcard"><div class="mcard-label">Energia hoje</div><div class="mcard-val">8<span style="font-size:14px;color:var(--color-text-tertiary)">/10</span></div><div class="mcard-sub">Alta!</div></div>
+      <div class="mcard"><div class="mcard-label">Gratidões</div><div class="mcard-val">3<span style="font-size:14px;color:var(--color-text-tertiary)"> hoje</span></div><div class="mcard-sub">Meta diária</div></div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-mood-heart" aria-hidden="true" style="margin-right:6px;color:#D4537E"></i>Como você está hoje?</h3>
+      <div class="mood-grid" id="mood-grid">
+        <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">😫</span>Péssimo</button>
+        <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">😕</span>Ruim</button>
+        <button class="mood-btn selected" onclick="selectMood(this)"><span class="mood-emoji">😊</span>Bem</button>
+        <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">😄</span>Ótimo</button>
+        <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">🤩</span>Incrível</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3><i class="ti ti-feather" aria-hidden="true" style="margin-right:6px;color:#D4537E"></i>Gratidão do dia</h3>
+      <div id="gratidoes" style="margin-bottom:10px;"></div>
+      <div class="input-row">
+        <input type="text" id="new-grat" placeholder="Pelo que sou grato hoje...">
+        <button class="add-btn" onclick="addGratidao()">+ Registrar</button>
+      </div>
+      <button class="add-btn" style="margin-top:12px;width:100%;" onclick="sendPrompt('Quero trabalhar minha saúde mental. Me dê uma rotina de bem-estar para seguir diariamente.')">Criar rotina de bem-estar ↗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const days = ['D','S','T','Q','Q','S','S'];
+const today = new Date();
+document.getElementById('today-date').textContent = today.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('visible');
+  event.target.closest('.nav-btn').classList.add('active');
+}
+
+const saudeHabits = [
+  { name: 'Treino', color: '#1D9E75', cls: 'done', vals: [1,1,0,1,0,0,0] },
+  { name: 'Água 2,5L', color: '#378ADD', cls: 'done-2', vals: [1,1,1,1,0,0,0] },
+  { name: 'Dormir às 23h', color: '#D85A30', cls: 'done-3', vals: [1,0,1,1,1,0,0] },
+  { name: 'Sem açúcar', color: '#D4537E', cls: 'done-4', vals: [1,1,0,1,0,0,0] },
+];
+
+function renderHabits(containerId, habits) {
+  const c = document.getElementById(containerId);
+  habits.forEach(h => {
+    const pct = Math.round(h.vals.filter(Boolean).length / 7 * 100);
+    const row = document.createElement('div'); row.className = 'habit-row';
+    row.innerHTML = `<div class="habit-name">${h.name}</div><div class="habit-dots">${days.map((d,i) => `<div class="hdot ${h.vals[i] ? h.cls : ''}" title="${d}" style="${i === (today.getDay()) ? 'outline:1.5px solid var(--color-border-primary);' : ''}"></div>`).join('')}</div><div class="habit-pct">${pct}%</div>`;
+    c.appendChild(row);
+  });
+}
+renderHabits('habits-saude', saudeHabits);
+
+const prodHabits = [
+  { name: 'Planejar o dia', color: '#EF9F27', cls: 'done-3', vals: [1,1,1,1,0,0,0] },
+  { name: 'Leitura 30min', color: '#D85A30', cls: 'done-3', vals: [1,0,1,1,1,0,0] },
+  { name: 'Inbox zero', color: '#378ADD', cls: 'done-2', vals: [0,1,0,1,0,0,0] },
+];
+renderHabits('habits-prod', prodHabits);
+
+const tasks = [
+  { text: 'Revisar planilha de orçamento', done: true, tag: 'fin', tagLabel: 'Finanças' },
+  { text: 'Academia — treino B', done: true, tag: 'saude', tagLabel: 'Saúde' },
+  { text: 'Ler capítulo 3 do livro', done: false, tag: 'prod', tagLabel: 'Prod.' },
+  { text: 'Ligar para o banco', done: false, tag: 'fin', tagLabel: 'Finanças' },
+  { text: 'Meditação noturna', done: false, tag: 'mente', tagLabel: 'Mente' },
+  { text: 'Preparar refeições da semana', done: false, tag: 'saude', tagLabel: 'Saúde' },
+];
+
+function renderTasks() {
+  const c = document.getElementById('task-list'); c.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const div = document.createElement('div'); div.className = 'task-item';
+    div.innerHTML = `<div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${i})">${t.done ? '<i class="ti ti-check" style="font-size:12px;"></i>' : ''}</div><div class="task-label ${t.done ? 'done' : ''}">${t.text}</div><span class="task-tag tag-${t.tag}" style="font-size:11px;padding:2px 8px;border-radius:99px;">${t.tagLabel}</span>`;
+    c.appendChild(div);
+  });
+}
+function toggleTask(i) { tasks[i].done = !tasks[i].done; renderTasks(); }
+function addTask() {
+  const inp = document.getElementById('new-task');
+  if (!inp.value.trim()) return;
+  tasks.push({ text: inp.value.trim(), done: false, tag: 'prod', tagLabel: 'Prod.' });
+  inp.value = ''; renderTasks();
+}
+renderTasks();
+
+const gratList = ['A minha saúde e disposição', 'Minha família e amigos', 'A oportunidade de crescer'];
+function renderGrat() {
+  const c = document.getElementById('gratidoes'); c.innerHTML = '';
+  gratList.forEach((g, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px;color:var(--color-text-primary);';
+    d.innerHTML = `<i class="ti ti-heart-filled" style="color:#D4537E;font-size:14px;" aria-hidden="true"></i>${g}`;
+    c.appendChild(d);
+  });
+}
+function addGratidao() {
+  const inp = document.getElementById('new-grat');
+  if (!inp.value.trim()) return;
+  gratList.push(inp.value.trim()); inp.value = ''; renderGrat();
+}
+renderGrat();
+
+function selectMood(btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+</script>
